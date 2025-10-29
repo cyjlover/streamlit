@@ -256,8 +256,8 @@ def render_part1_scoring(poid: str):
             "<br>- 全过程正确但结尾错误 → 分数 0.9。"
         ),
         "是否分步讲解": (
-            "📌 判断模型是否<b>遵循分步骤</b>进行讲解，即每轮引导学生推进一步，而不是一股脑输出全部回答。"
-            "<br><b>1：遵循分步骤  0：提前给答案或存在跳跃性推导</b>"
+            "📌 判断模型是否<b>遵循分步骤</b>进行讲解，即每轮引导学生推进一步，而不是一股脑输出全部回答，且不应该提前给答案。"
+            "<br><b>1：遵循分步骤  0：不遵循（提前给答案或存在跳跃性推导）</b>"
         ),
         "提问质量": (
             "📌 判断模型在讲解过程中提出的<b>高质量问题比例</b>："
@@ -288,8 +288,12 @@ def render_part1_scoring(poid: str):
         scores[part1_key].setdefault(dim, {})  # 防止 KeyError
 
         with st.expander(f"（{i}）{dim}", expanded=False):
+
             st.markdown(f"<div style='font-size: 16px; padding-left: 1em;'>{descriptions[dim]}</div>",
                         unsafe_allow_html=True)
+
+            st.markdown(f"<div style='font-size: 16px; padding-left: 1em;'>{descriptions[dim]}</div>", unsafe_allow_html=True)
+
 
             if control_type == "rank":
                 multiselect_key = f"{part1_key}_{dim}_multiselect"  # 加上维度和 poid，确保唯一性
@@ -316,6 +320,7 @@ def render_part1_scoring(poid: str):
                     key=multiselect_key
                 )
 
+
                 # ===== 评分原因输入框，直接放在当前展开部分中 =====
                 reason_key = f"{part1_key}_{dim}_reason"
                 prev_reason = scores[part1_key].get(dim, {}).get("reason", "")
@@ -326,6 +331,8 @@ def render_part1_scoring(poid: str):
                     scores[part1_key][dim]["reason"] = reason
                 else:
                     scores[part1_key][dim]["reason"] = ""
+
+
 
                 # ===== 保存评分并标记为已填 =====
                 if len(selected) == 3:
@@ -341,6 +348,12 @@ def render_part1_scoring(poid: str):
                     st.warning("请完成模型偏好排序（需要选满三个）以保存评分结果。", icon="⚠️")
 
                 continue
+
+
+
+
+
+
 
             cols = st.columns([1, 0.05, 1, 0.05, 1])
             for j, (col, model_name) in enumerate(zip([cols[0], cols[2], cols[4]], model_names)):
@@ -690,6 +703,7 @@ def main():
                     "score_o4-mini": models.get("B", ""),
                     "score_Spark_X1": models.get("C", ""),
                     "reason": models.get("reason", "")  # 添加评分原因sl
+
                 }
                 all_scores.append(row)
 
