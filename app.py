@@ -351,10 +351,6 @@ def render_part1_scoring(poid: str):
 
 
 
-
-
-
-
             cols = st.columns([1, 0.05, 1, 0.05, 1])
             for j, (col, model_name) in enumerate(zip([cols[0], cols[2], cols[4]], model_names)):
                 key = f"{part1_key}_{dim}_{model_name}"
@@ -383,7 +379,16 @@ def render_part1_scoring(poid: str):
                 render_vertical_divider()
             with cols[3]:
                 render_vertical_divider()
+            # ===== 评分原因输入框，直接放在当前展开部分中 =====
+            reason_key = f"{part1_key}_{dim}_reason"
+            prev_reason = scores[part1_key].get(dim, {}).get("reason", "")
+            reason = st.text_area("评分/排序原因(可选)", value=prev_reason, key=reason_key)
 
+            # 保存评分原因
+            if reason:
+                scores[part1_key][dim]["reason"] = reason
+            else:
+                scores[part1_key][dim]["reason"] = ""
 
 def render_part2_scoring(part2_list, poid):
     teacher_id = st.session_state.teacher_id
@@ -470,7 +475,16 @@ def render_part2_scoring(part2_list, poid):
             render_vertical_divider()
         with cols[3]:
             render_vertical_divider()
+        # ===== 评分原因输入框，直接放在当前展开部分中 =====
+        reason_key = f"{block_key}_reason"
+        prev_reason = scores[block_key].get("reason", "")
+        reason = st.text_area("评分/排序原因(可选)", value=prev_reason, key=reason_key)
 
+        # 保存评分原因
+        if reason:
+            scores[block_key]["reason"] = reason
+        else:
+            scores[block_key]["reason"] = ""
 
 def render_part3_scoring(item, poid):
     teacher_id = st.session_state.teacher_id
@@ -552,9 +566,16 @@ def render_part3_scoring(item, poid):
             render_vertical_divider()
         with cols[3]:
             render_vertical_divider()
+        # ===== 评分原因输入框，直接放在当前展开部分中 =====
+        reason_key = f"{score_key}_reason"
+        prev_reason = scores[score_key].get("reason", "")
+        reason = st.text_area("评分/排序原因(可选)", value=prev_reason, key=reason_key)
 
-
-
+        # 保存评分原因
+        if reason:
+            scores[score_key]["reason"] = reason
+        else:
+            scores[score_key]["reason"] = ""
 
 
 # ========== 主程序入口 ==========
@@ -734,7 +755,7 @@ def main():
                     "score_DeepSeek-V3": v.get("A", ""),
                     "score_o4-mini": v.get("B", ""),
                     "score_Spark_X1": v.get("C", ""),
-                    "reason": "" # 添加评分原因sl
+                    "reason": v.get("reason", "")  # 添加评分原因sl
                 }
                 all_scores.append(row)
 
@@ -774,7 +795,7 @@ def main():
                     "score_DeepSeek-V3": v.get("A", ""),
                     "score_o4-mini": v.get("B", ""),
                     "score_Spark_X1": v.get("C", ""),
-                    "reason": ""  # 添加评分原因sl
+                    "reason": v.get("reason", "")  # 添加评分原因sl
                 }
                 all_scores.append(row)
 
