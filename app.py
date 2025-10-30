@@ -289,11 +289,7 @@ def render_part1_scoring(poid: str):
 
         with st.expander(f"（{i}）{dim}", expanded=False):
 
-            st.markdown(f"<div style='font-size: 16px; padding-left: 1em;'>{descriptions[dim]}</div>",
-                        unsafe_allow_html=True)
-
             st.markdown(f"<div style='font-size: 16px; padding-left: 1em;'>{descriptions[dim]}</div>", unsafe_allow_html=True)
-
 
             if control_type == "rank":
                 multiselect_key = f"{part1_key}_{dim}_multiselect"  # 加上维度和 poid，确保唯一性
