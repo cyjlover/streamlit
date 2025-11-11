@@ -6,6 +6,71 @@ import re
 from datetime import datetime
 import base64
 
+##
+
+def upload_file(teacher_id):
+    uploaded_file = st.file_uploader("选择上次导出的 CSV 文件", type="csv")
+    if "file_uploaded" not in st.session_state:
+        st.session_state["file_uploaded"] = False  # 设置标志位
+    if uploaded_file is not None:
+        try:
+            # 读取 CSV 文件
+            df = pd.read_csv(uploaded_file)
+
+            # 解析 CSV 文件并更新 st.session_state.all_scores
+            if "all_scores" not in st.session_state:
+                st.session_state.all_scores = {}
+
+            # 假设文件包含列：poid, sample_index_display, part, type, dimension, score_DeepSeek-V3, score_o4-mini, score_Spark_X1, reason
+            for _, row in df.iterrows():
+                poid = str(row["poid"]).zfill(3)  # 转换为字符串并确保格式为三位数
+                # 处理每个评分部分
+                part = row["part"]
+                dimension = row["dimension"]
+                model_scores = {
+                    "A": row["score_DeepSeek-V3"],
+                    "B": row["score_o4-mini"],
+                    "C": row["score_Spark_X1"]
+                }
+                reason = row["reason"]
+
+                # 将评分数据存入 st.session_state.all_scores
+                if part == "part1":
+                    part1_key = f"part1_{poid}"
+                    st.session_state.all_scores[teacher_id]["part1_scores"].setdefault(part1_key, {})
+                    st.session_state.all_scores[teacher_id]["part1_scores"][part1_key].setdefault(dimension, {})
+                    st.session_state.all_scores[teacher_id]["part1_scores"][part1_key][dimension] = model_scores
+                    st.session_state.all_scores[teacher_id]["part1_scores"][part1_key][dimension]["reason"] = reason
+                elif part == "part2":
+                    # 同样的方法可以用于 part2 和 part3
+                    if dimension=="引导质量（理解）":
+                        block_key = f"part2_{poid}_idx0_t1_0"
+                    elif dimension=="引导质量（不理解）":
+                        block_key = f"part2_{poid}_idx1_t2_0"
+                    else:
+                        block_key = f"part2_{poid}_idx2_t3_0"
+                    st.session_state.all_scores[teacher_id]["part2_scores"].setdefault(block_key, {})
+                    st.session_state.all_scores[teacher_id]["part2_scores"][block_key] = model_scores
+                    st.session_state.all_scores[teacher_id]["part2_scores"][block_key]["reason"] = reason
+                elif part == "part3":
+                    num = (int(row["poid"]) - 1) / 3 + 1
+                    if dimension=="正确理解":
+                        score_key = f"part3_{poid}_row_{str(int(num))}_{row['type']}_score0"
+                    elif dimension=="正确反馈":
+                        score_key = f"part3_{poid}_row_{str(int(num))}_{row['type']}_score1"
+                    st.session_state.all_scores[teacher_id]["part3_scores"].setdefault(score_key, {})
+                    st.session_state.all_scores[teacher_id]["part3_scores"][score_key] = model_scores
+                    st.session_state.all_scores[teacher_id]["part3_scores"][score_key]["reason"] = reason
+            st.success("CSV 文件内容已成功导入！")
+            st.session_state["file_uploaded"] = True
+            # 触发页面重新渲染
+            st.rerun()  #替代 st.rerun()
+            #st.write(st.session_state.all_scores)
+        except Exception as e:
+            st.error(f"读取文件时出错: {e}")
+
+
+
 # ========== 工具函数 ==========
 
 #渲染文本
@@ -28,7 +93,6 @@ def render_turn(turn: dict, model_name: str):
     if "user" in turn:
         st.markdown(f"学生：")
         render_latex_textblock(turn["user"])
-
 
 #渲染竖分割线
 def render_vertical_divider():
@@ -298,8 +362,8 @@ def render_part1_scoring(poid: str):
                 if multiselect_key not in st.session_state:
                     prev_ranks = scores[part1_key].get(dim, {})  # {"A":3, "C":2, "B":1}
                     if any(prev_ranks.values()):
-                        # 有打分，恢复排序顺序
-                        ranked_models = sorted(prev_ranks.items(), key=lambda x: -x[1])
+                        # 有打分，恢复排序顺序,reason放最后
+                        ranked_models = sorted(prev_ranks.items(),key=lambda x: -x[1] if isinstance(x[1], (int, float)) else float('-inf'))
                         restored = []
                         for rk, _ in ranked_models:
                             if rk in model_keys:
@@ -616,7 +680,8 @@ def main():
             "part2_scores": {},
             "part3_scores": {}
         }
-
+    if not "file_uploaded" in st.session_state or not st.session_state["file_uploaded"]:
+        upload_file(teacher_id)
     # ========== 加载数据：每位教师一个 JSON ==========
     file_path = f"data_{teacher_id}.json"
     try:
@@ -645,6 +710,7 @@ def main():
     current = data[idx]
     poid = current.get("poid", f"id_{idx}")
 
+    """
     # 初始化模型顺序混淆
     if "model_shuffle_map" not in st.session_state:
         st.session_state.model_shuffle_map = {}
@@ -653,7 +719,14 @@ def main():
         shuffled = ["A", "B", "C"]
         random.shuffle(shuffled)
         st.session_state.model_shuffle_map[idx] = dict(zip(["1", "2", "3"], shuffled))
+    """
 
+    if "model_shuffle_map" not in st.session_state:
+        st.session_state.model_shuffle_map = {}
+
+    # 使用固定的顺序 "A", "B", "C"
+    if idx not in st.session_state.model_shuffle_map:
+        st.session_state.model_shuffle_map[idx] = {"1": "A", "2": "B", "3": "C"}
 
     # 页面导航（顶部 + 跳转）
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -720,6 +793,7 @@ def main():
                     "score_o4-mini": models.get("B", ""),
                     "score_Spark_X1": models.get("C", ""),
                     "reason": models.get("reason", "")  # 添加评分原因sl
+                    #"model_shuffle": str(model_map)  # 添加模型混淆信息
 
                 }
                 all_scores.append(row)
@@ -752,6 +826,7 @@ def main():
                     "score_o4-mini": v.get("B", ""),
                     "score_Spark_X1": v.get("C", ""),
                     "reason": v.get("reason", "")  # 添加评分原因sl
+                    #"model_shuffle": str(model_map)  # 添加模型混淆信息
                 }
                 all_scores.append(row)
 
@@ -792,6 +867,7 @@ def main():
                     "score_o4-mini": v.get("B", ""),
                     "score_Spark_X1": v.get("C", ""),
                     "reason": v.get("reason", "")  # 添加评分原因sl
+                    #"model_shuffle": str(model_map)  # 添加模型混淆信息
                 }
                 all_scores.append(row)
 
