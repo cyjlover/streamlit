@@ -101,7 +101,7 @@ def render_vertical_divider():
     """, unsafe_allow_html=True)
 
 #real_keys = {"A": "DeepSeek-V3", "B": "o4-mini", "C": "Spark_X1"}
-real_keys = {"A": "glm-4.5", "B": "qwen235", "C": "qwen80"}
+real_keys = {"A": "deepseek_v3", "B": "kimi", "C": "kimi2"}
 
 # ========== 展示布局的函数 ==========
 def display_part1(part1, poid):
@@ -111,7 +111,7 @@ def display_part1(part1, poid):
     model_keys = [model_map[m] for m in ["1", "2", "3"]]
     model_names = ["模型1", "模型2", "模型3"]
     #real_keys = {"A": "DeepSeek-V3", "B": "o4-mini", "C": "Spark_X1"}
-    real_keys = {"A": "glm-4.5", "B": "qwen235", "C": "qwen80"}
+    real_keys = {"A": "deepseek_v3", "B": "kimi", "C": "kimi2"}
     model_turns = [part1.get(real_keys[k], []) for k in model_keys]
     render_latex_textblock("#### ❓ 问题：")
     render_latex_textblock(part1["question"])
@@ -159,7 +159,7 @@ def display_part2(part2_list, poid):
     model_keys = [model_map[m] for m in ["1", "2", "3"]]
     model_names = ["模型1", "模型2", "模型3"]
     #real_keys = {"A": "DeepSeek-V3", "B": "o4-mini", "C": "Spark_X1"}
-    real_keys = {"A": "glm-4.5", "B": "qwen235", "C": "qwen80"}
+    real_keys = {"A": "deepseek_v3", "B": "kimi", "C": "kimi2"}
     for idx, block in enumerate(part2_list):
         st.markdown(f"#### {type_map[block['type']]} 类型")
 
@@ -222,7 +222,7 @@ def display_part3(part3_list, poid):
     model_keys = [model_map[m] for m in ["1", "2", "3"]]
     model_names = ["模型1", "模型2", "模型3"]
     #real_keys = {"A": "DeepSeek-V3", "B": "o4-mini", "C": "Spark_X1"}
-    real_keys = {"A": "glm-4.5", "B": "qwen235", "C": "qwen80"}
+    real_keys = {"A": "deepseek_v3", "B": "kimi", "C": "kimi2"}
     for item in part3_list:
         # 强调类型
         st.markdown(f"<div style='font-size: 22px; font-weight: bold; color: #c0392b; background-color: #fdecea; padding: 8px 12px; border-radius: 6px; display: inline-block;'>类型：{item['type']}</div>", unsafe_allow_html=True)
